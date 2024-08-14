@@ -25,13 +25,13 @@ import (
 
 	"github.com/casbin/casbin"
 	"github.com/rokwire/core-auth-library-go/v3/authorization"
-	"github.com/rokwire/core-auth-library-go/v3/tokenauth"
 	"github.com/rokwire/core-auth-library-go/v3/authservice"
+	"github.com/rokwire/core-auth-library-go/v3/tokenauth"
 	"github.com/rokwire/core-auth-library-go/v3/webauth"
-  
+
+	"github.com/rokwire/logging-library-go/v2/errors"
 	"github.com/rokwire/logging-library-go/v2/logs"
 	"github.com/rokwire/logging-library-go/v2/logutils"
-	"github.com/rokwire/logging-library-go/v2/errors"
 
 	"github.com/gorilla/mux"
 
@@ -412,8 +412,8 @@ func newBBsStandardHandler(serviceRegManager *authservice.ServiceRegManager) (*t
 		return http.StatusOK, nil
 	}
 
-	auth := tokenauth.NewStandardHandler(*bbsTokenAuth, check)
-	return &auth, nil
+	auth := tokenauth.NewStandardHandler(bbsTokenAuth, check)
+	return auth, nil
 }
 
 // END BBs auth //////////
@@ -455,6 +455,6 @@ func NewWebAdapter(app *core.Application, host string, port string, supportedCli
 	bbApisHandler := rest.NewBBApisHandler(app)
 
 	return &Adapter{host: host, port: port, auth: auth, apisHandler: apisHandler, adminApisHandler: adminApisHandler,
-		internalApisHandler: internalApisHandler, analyticsApisHandler: analyticsApisHandler,
+		internalApisHandler: internalApisHandler, analyticsApisHandler: analyticsApisHandler, auth2: auth2,
 		corsAllowedOrigins: corsAllowedOrigins, bbsAPIHandler: bbApisHandler, corsAllowedHeaders: corsAllowedHeaders, logger: logger}
 }
