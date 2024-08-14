@@ -26,8 +26,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/rokwire/core-auth-library-go/v2/authservice"
 	"github.com/rokwire/logging-library-go/v2/logs"
+	"github.com/rokwire/core-auth-library-go/v3/authservice"
 )
 
 // Adapter implements the Core interface
