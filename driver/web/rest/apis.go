@@ -1083,7 +1083,7 @@ func (h *ApisHandler) GetGroupMembersV2(clientID string, current *model.User, w 
 	//check if allowed to update
 	members, err := h.app.Services.FindGroupMemberships(clientID, request)
 	if err != nil {
-		log.Printf("api.GetGroupMembers error: %s", err)
+		log.Printf("api.GetGroupMembersV2 error: %s", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -1094,7 +1094,7 @@ func (h *ApisHandler) GetGroupMembersV2(clientID string, current *model.User, w 
 
 	data, err := json.Marshal(members.Items)
 	if err != nil {
-		log.Printf("api.GetGroupMembers error: %s", err)
+		log.Printf("api.GetGroupMembersV2 error: %s", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
