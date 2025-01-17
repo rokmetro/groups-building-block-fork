@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 ### Added
 - Add CORS support
+- Add POST /groups/{group-id}/members/v2 API for web
 
 ## [1.55.0] - 2024-11-13
 ### Added 
