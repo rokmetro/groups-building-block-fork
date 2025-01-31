@@ -171,7 +171,7 @@ func (sa *Adapter) SaveSyncConfig(context TransactionContext, config model.SyncC
 
 	upsert := true
 	opts := options.ReplaceOptions{Upsert: &upsert}
-	err := sa.db.configs.ReplaceOne(filter, config, &opts)
+	err := sa.db.configs.ReplaceOneWithContext(context, filter, config, &opts)
 	if err != nil {
 		return err
 	}
