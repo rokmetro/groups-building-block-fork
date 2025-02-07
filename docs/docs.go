@@ -4767,14 +4767,36 @@ const docTemplate = `{
                 }
             }
         },
-        "/group/{group-id}/members": {
-            "put": {
+        "/authman/synchronize": {
+            "post": {
                 "security": [
                     {
                         "AppUserAuth": []
                     }
                 ],
-                "description": "Updates a membership. Only the status can be changed.",
+                "description": "Synchronizes Authman groups membership",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Client"
+                ],
+                "operationId": "InternalSynchronizeAuthman",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/group/{group-id}/members": {
+            "post": {
+                "security": [
+                    {
+                        "AppUserAuth": []
+                    }
+                ],
+                "description": "Create multiple members in group with desired status",
                 "consumes": [
                     "application/json"
                 ],
@@ -4784,7 +4806,7 @@ const docTemplate = `{
                 "tags": [
                     "Admin"
                 ],
-                "operationId": "AdminCreateMemberships",
+                "operationId": "MultiCreateMembers",
                 "parameters": [
                     {
                         "type": "string",
@@ -4799,10 +4821,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/model.MembershipStatus"
-                            }
+                            "$ref": "#/definitions/rest.createMembershipsRequest"
                         }
                     },
                     {
@@ -4943,17 +4962,6 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/ToMember"
                     }
-                }
-            }
-        },
-        "EventResponse": {
-            "type": "object",
-            "properties": {
-                "event_id": {
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "string"
                 }
             }
         },
@@ -5209,25 +5217,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "user_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "GroupMembershipResponse": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "GroupResponse": {
-            "type": "object",
-            "properties": {
-                "id": {
                     "type": "string"
                 }
             }
@@ -5632,17 +5621,6 @@ const docTemplate = `{
                 }
             }
         },
-        "PostResponse": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "string"
-                }
-            }
-        },
         "Sender": {
             "type": "object",
             "properties": {
@@ -5753,6 +5731,9 @@ const docTemplate = `{
                 },
                 "image_url": {
                     "type": "string"
+                },
+                "members": {
+                    "$ref": "#/definitions/model.DefaultMembershipConfig"
                 },
                 "membership_questions": {
                     "type": "array",
@@ -6151,6 +6132,29 @@ const docTemplate = `{
                 }
             }
         },
+        "model.DefaultMembershipConfig": {
+            "type": "object",
+            "required": [
+                "status"
+            ],
+            "properties": {
+                "net_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "admin",
+                        "member",
+                        "pending",
+                        "rejected"
+                    ]
+                }
+            }
+        },
         "model.MembershipStatus": {
             "type": "object",
             "properties": {
@@ -6271,25 +6275,25 @@ const docTemplate = `{
                 "events": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/EventResponse"
+                        "$ref": "#/definitions/Event"
                     }
                 },
                 "group_memberships": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/GroupMembershipResponse"
+                        "$ref": "#/definitions/GroupMembership"
                     }
                 },
                 "groups": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/GroupResponse"
+                        "$ref": "#/definitions/Group"
                     }
                 },
                 "posts": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/PostResponse"
+                        "$ref": "#/definitions/model.Post"
                     }
                 }
             }
@@ -6435,6 +6439,17 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/ToMember"
+                    }
+                }
+            }
+        },
+        "rest.createMembershipsRequest": {
+            "type": "object",
+            "properties": {
+                "members": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.MembershipStatus"
                     }
                 }
             }

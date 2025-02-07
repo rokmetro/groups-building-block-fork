@@ -348,6 +348,60 @@ func (app *Application) updateMembership(clientID string, current *model.User, m
 	return nil
 }
 
+func (app *Application) createMembershipsStatuses(clientID string, current *model.User, groupID string, membershipStatuses model.MembershipStatuses) error {
+	err := app.storage.PerformTransaction(func(context storage.TransactionContext) error {
+		membership, _ := app.storage.FindGroupMembershipWithContext(context, clientID, groupID, current.ID)
+
+		if membership != nil && membership.IsAdmin() {
+
+			group, err := app.storage.FindGroup(context, clientID, groupID, &current.ID)
+			if err != nil {
+				return err
+			}
+
+			netIDs := membershipStatuses.GetAllNetIDs()
+			netIDAccounts, err := app.corebb.GetAllCoreAccountsWithNetIDs(netIDs, &current.AppID, &current.OrgID)
+			if err != nil {
+				return err
+			}
+
+			existingMemberships, err := app.storage.FindGroupMembershipsWithContext(context, clientID, model.MembershipFilter{
+				GroupIDs: []string{groupID},
+				NetIDs:   netIDs,
+			})
+			if err != nil {
+				return err
+			}
+
+			var memberships []model.GroupMembership
+			mapping := membershipStatuses.GetAllNetIDStatusMapping()
+			if len(netIDAccounts) > 0 {
+				for _, account := range netIDAccounts {
+					if status, ok := mapping[account.GetNetID()]; ok {
+						if existingMemberships.GetMembershipBy(func(membership model.GroupMembership) bool {
+							return membership.NetID == account.GetNetID()
+						}) == nil {
+							memberships = append(memberships, account.ToMembership(groupID, status))
+						}
+					}
+				}
+				if len(memberships) > 0 {
+					err := app.storage.CreateMemberships(context, clientID, current, group, memberships)
+					if err != nil {
+						return err
+					}
+				}
+			}
+
+			return app.storage.UpdateGroupStats(context, clientID, groupID, true, true, false, true)
+		}
+
+		return nil
+	})
+
+	return err
+}
+
 func (app *Application) updateMemberships(clientID string, user *model.User, group *model.Group, operation model.MembershipMultiUpdate) error {
 	if group != nil && group.CurrentMember != nil && group.CurrentMember.IsAdmin() {
 		err := app.storage.UpdateMemberships(clientID, user, group.ID, operation)
@@ -378,41 +432,54 @@ func (app *Application) reportGroupAsAbuse(clientID string, current *model.User,
 }
 
 func (app *Application) getPosts(clientID string, current *model.User, filter model.PostsFilter, filterPrivatePostsValue *bool, filterByToMembers bool) ([]model.Post, error) {
-	return app.storage.FindPosts(clientID, current, filter, filterPrivatePostsValue, filterByToMembers)
+	// if app.postsMigrationConfig.Migrated {
+	return app.social.GetPosts(clientID, current, filter, filterPrivatePostsValue, filterByToMembers)
+	// }
+	// return app.storage.FindPosts(clientID, current, filter, filterPrivatePostsValue, filterByToMembers)
+
 }
 
 func (app *Application) getPost(clientID string, userID *string, groupID string, postID string, skipMembershipCheck bool, filterByToMembers bool) (*model.Post, error) {
-	return app.storage.FindPost(nil, clientID, userID, groupID, postID, skipMembershipCheck, filterByToMembers)
+	// if app.postsMigrationConfig.Migrated {
+	return app.social.GetPost(clientID, userID, groupID, postID, skipMembershipCheck, filterByToMembers)
+	// }
+	// return app.storage.FindPost(nil, clientID, userID, groupID, postID, skipMembershipCheck, filterByToMembers)
 }
 
 func (app *Application) getUserPostCount(clientID string, userID string) (*int64, error) {
-	return app.storage.GetUserPostCount(clientID, userID)
+	// if app.postsMigrationConfig.Migrated {
+	return app.social.GetUserPostCount(clientID, userID)
+	// }
+	// return app.storage.GetUserPostCount(clientID, userID)
 }
 
 func (app *Application) createPost(clientID string, current *model.User, post *model.Post, group *model.Group) (*model.Post, error) {
+	// if app.postsMigrationConfig.Migrated {
+	return app.social.CreatePost(clientID, current, post, group)
+	// }
 
-	post, err := app.storage.CreatePost(clientID, current, post)
-	if err != nil {
-		return nil, err
-	}
+	// post, err := app.storage.CreatePost(clientID, current, post)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	handleRewardsAsync := func(clientID, userID string) {
-		count, grErr := app.storage.GetUserPostCount(clientID, current.ID)
-		if grErr != nil {
-			log.Printf("Error createPost(): %s", grErr)
-		} else if count != nil {
-			if *count > 1 {
-				app.rewards.CreateUserReward(current.ID, rewards.GroupsUserSubmittedPost, "")
-			} else if *count == 1 {
-				app.rewards.CreateUserReward(current.ID, rewards.GroupsUserSubmittedFirstPost, "")
-			}
-		}
-	}
-	go handleRewardsAsync(clientID, current.ID)
+	// handleRewardsAsync := func(clientID, userID string) {
+	// 	count, grErr := app.storage.GetUserPostCount(clientID, current.ID)
+	// 	if grErr != nil {
+	// 		log.Printf("Error createPost(): %s", grErr)
+	// 	} else if count != nil {
+	// 		if *count > 1 {
+	// 			app.rewards.CreateUserReward(current.ID, rewards.GroupsUserSubmittedPost, "")
+	// 		} else if *count == 1 {
+	// 			app.rewards.CreateUserReward(current.ID, rewards.GroupsUserSubmittedFirstPost, "")
+	// 		}
+	// 	}
+	// }
+	// go handleRewardsAsync(clientID, current.ID)
 
-	go app.sendGroupNotificationForNewPost(clientID, &current.ID, &current.Name, group, post)
+	// go app.sendGroupNotificationForNewPost(clientID, &current.ID, &current.Name, group, post)
 
-	return post, nil
+	// return post, nil
 }
 
 func (app *Application) sendGroupNotificationForNewPost(clientID string, currentUserID *string, currentUserName *string, group *model.Group, post *model.Post) error {
@@ -540,117 +607,130 @@ func (app *Application) getPostNotificationRecipientsAsUserIDs(clientID string, 
 }
 
 func (app *Application) updatePost(clientID string, current *model.User, group *model.Group, post *model.Post) (*model.Post, error) {
-	return app.storage.UpdatePost(clientID, current.ID, post)
+	// if app.postsMigrationConfig.Migrated {
+	return app.social.UpdatePost(clientID, current, group, post)
+	// }
+	// return app.storage.UpdatePost(clientID, current.ID, post)
 }
 
 func (app *Application) reactToPost(clientID string, current *model.User, groupID string, postID string, reaction string) error {
-	transaction := func(context storage.TransactionContext) error {
-		post, err := app.storage.FindPost(context, clientID, &current.ID, groupID, postID, true, false)
-		if err != nil {
-			return fmt.Errorf("error finding post: %v", err)
-		}
-		if post == nil {
-			return fmt.Errorf("missing post for id %s", postID)
-		}
+	// if app.postsMigrationConfig.Migrated {
+	return app.social.ReactToPost(clientID, current, groupID, postID, reaction)
+	// }
 
-		for _, userID := range post.Reactions[reaction] {
-			if current.ID == userID {
-				err = app.storage.ReactToPost(context, current.ID, postID, reaction, false)
-				if err != nil {
-					return fmt.Errorf("error removing reaction: %v", err)
-				}
+	// transaction := func(context storage.TransactionContext) error {
+	// 	post, err := app.storage.FindPost(context, clientID, &current.ID, groupID, postID, true, false)
+	// 	if err != nil {
+	// 		return fmt.Errorf("error finding post: %v", err)
+	// 	}
+	// 	if post == nil {
+	// 		return fmt.Errorf("missing post for id %s", postID)
+	// 	}
 
-				return nil
-			}
-		}
+	// 	for _, userID := range post.Reactions[reaction] {
+	// 		if current.ID == userID {
+	// 			err = app.storage.ReactToPost(context, current.ID, postID, reaction, false)
+	// 			if err != nil {
+	// 				return fmt.Errorf("error removing reaction: %v", err)
+	// 			}
 
-		err = app.storage.ReactToPost(context, current.ID, postID, reaction, true)
-		if err != nil {
-			return fmt.Errorf("error adding reaction: %v", err)
-		}
+	// 			return nil
+	// 		}
+	// 	}
 
-		return nil
-	}
+	// 	err = app.storage.ReactToPost(context, current.ID, postID, reaction, true)
+	// 	if err != nil {
+	// 		return fmt.Errorf("error adding reaction: %v", err)
+	// 	}
 
-	return app.storage.PerformTransaction(transaction)
+	// 	return nil
+	// }
+
+	// return app.storage.PerformTransaction(transaction)
 }
 
 func (app *Application) reportPostAsAbuse(clientID string, current *model.User, group *model.Group, post *model.Post, comment string, sendToDean bool, sendToGroupAdmins bool) error {
+	// if app.postsMigrationConfig.Migrated {
+	return app.social.ReportPostAsAbuse(clientID, current, group, post, comment, sendToDean, sendToGroupAdmins)
+	// 	}
 
-	if !sendToDean && !sendToGroupAdmins {
-		sendToDean = true
-	}
+	// 	if !sendToDean && !sendToGroupAdmins {
+	// 		sendToDean = true
+	// 	}
 
-	err := app.storage.ReportPostAsAbuse(clientID, current.ID, group, post)
-	if err != nil {
-		log.Printf("error while reporting an abuse post: %s", err)
-		return fmt.Errorf("error while reporting an abuse post: %s", err)
-	}
+	// 	err := app.storage.ReportPostAsAbuse(clientID, current.ID, group, post)
+	// 	if err != nil {
+	// 		log.Printf("error while reporting an abuse post: %s", err)
+	// 		return fmt.Errorf("error while reporting an abuse post: %s", err)
+	// 	}
 
-	subject := ""
-	if sendToDean && !sendToGroupAdmins {
-		subject = "Report violation of Student Code to Dean of Students"
-	} else if !sendToDean && sendToGroupAdmins {
-		subject = "Report of Obscene, Harassing, or Threatening Content to Group Administrators"
-	} else {
-		subject = "Report violation of Student Code to Dean of Students and obscene, threatening, or harassing content to Group Administrators"
-	}
+	// 	subject := ""
+	// 	if sendToDean && !sendToGroupAdmins {
+	// 		subject = "Report violation of Student Code to Dean of Students"
+	// 	} else if !sendToDean && sendToGroupAdmins {
+	// 		subject = "Report of Obscene, Harassing, or Threatening Content to Group Administrators"
+	// 	} else {
+	// 		subject = "Report violation of Student Code to Dean of Students and obscene, threatening, or harassing content to Group Administrators"
+	// 	}
 
-	subject = fmt.Sprintf("%s %s", subject, post.DateCreated.Format(time.RFC850))
+	// 	subject = fmt.Sprintf("%s %s", subject, post.DateCreated.Format(time.RFC850))
 
-	if sendToDean {
-		body := fmt.Sprintf(`
-<div>Violation by: %s %s\n</div>
-<div>Group title: %s\n</div>
-<div>Post Title: %s\n</div>
-<div>Post Body: %s\n</div>
-<div>Reported by: %s %s\n</div>
-<div>Reported comment: %s\n</div>
-	`, current.ExternalID, post.Creator.Name, group.Title, post.Subject, post.Body,
-			current.ExternalID, current.Name, comment)
-		body = strings.ReplaceAll(body, `\n`, "\n")
-		app.notifications.SendMail(app.config.ReportAbuseRecipientEmail, subject, body)
-	}
-	if sendToGroupAdmins {
-		result, _ := app.storage.FindGroupMemberships(clientID, model.MembershipFilter{
-			GroupIDs: []string{group.ID},
-			Statuses: []string{"admin"},
-		})
-		toMembers := result.GetMembersAsRecipients(func(membership model.GroupMembership) (bool, bool) {
-			return membership.UserID != current.ID, false
-		})
+	// 	if sendToDean {
+	// 		body := fmt.Sprintf(`
+	// <div>Violation by: %s %s\n</div>
+	// <div>Group title: %s\n</div>
+	// <div>Post Title: %s\n</div>
+	// <div>Post Body: %s\n</div>
+	// <div>Reported by: %s %s\n</div>
+	// <div>Reported comment: %s\n</div>
+	// 	`, current.ExternalID, post.Creator.Name, group.Title, post.Subject, post.Body,
+	// 			current.ExternalID, current.Name, comment)
+	// 		body = strings.ReplaceAll(body, `\n`, "\n")
+	// 		app.notifications.SendMail(app.config.ReportAbuseRecipientEmail, subject, body)
+	// 	}
+	// 	if sendToGroupAdmins {
+	// 		result, _ := app.storage.FindGroupMemberships(clientID, model.MembershipFilter{
+	// 			GroupIDs: []string{group.ID},
+	// 			Statuses: []string{"admin"},
+	// 		})
+	// 		toMembers := result.GetMembersAsRecipients(func(membership model.GroupMembership) (bool, bool) {
+	// 			return membership.UserID != current.ID, false
+	// 		})
 
-		body := fmt.Sprintf(`
-Violation by: %s %s
-Group title: %s
-Post Title: %s
-Post Body: %s
-Reported by: %s %s
-Reported comment: %s
-	`, current.ExternalID, post.Creator.Name, group.Title, post.Subject, post.Body,
-			current.ExternalID, current.Name, comment)
+	// 		body := fmt.Sprintf(`
+	// Violation by: %s %s
+	// Group title: %s
+	// Post Title: %s
+	// Post Body: %s
+	// Reported by: %s %s
+	// Reported comment: %s
+	// 	`, current.ExternalID, post.Creator.Name, group.Title, post.Subject, post.Body,
+	// 			current.ExternalID, current.Name, comment)
 
-		return app.notifications.SendNotification(toMembers, nil, subject, body, map[string]string{
-			"type":         "group",
-			"operation":    "report_abuse_post",
-			"entity_type":  "group",
-			"entity_id":    group.ID,
-			"entity_name":  group.Title,
-			"post_id":      post.ID,
-			"post_subject": post.Subject,
-			"post_body":    post.Body,
-		},
-			current.AppID,
-			current.OrgID,
-			nil,
-		)
-	}
+	// 		return app.notifications.SendNotification(toMembers, nil, subject, body, map[string]string{
+	// 			"type":         "group",
+	// 			"operation":    "report_abuse_post",
+	// 			"entity_type":  "group",
+	// 			"entity_id":    group.ID,
+	// 			"entity_name":  group.Title,
+	// 			"post_id":      post.ID,
+	// 			"post_subject": post.Subject,
+	// 			"post_body":    post.Body,
+	// 		},
+	// 			current.AppID,
+	// 			current.OrgID,
+	// 			nil,
+	// 		)
+	// 	}
 
-	return nil
+	// return nil
 }
 
 func (app *Application) deletePost(clientID string, userID string, groupID string, postID string, force bool) error {
-	return app.storage.DeletePost(nil, clientID, userID, groupID, postID, force)
+	// if app.postsMigrationConfig.Migrated {
+	return app.social.DeletePost(clientID, userID, groupID, postID, force)
+	// }
+	// return app.storage.DeletePost(nil, clientID, userID, groupID, postID, force)
 }
 
 func (app *Application) sendGroupNotification(clientID string, notification model.GroupNotification, predicate model.MutePreferencePredicate) error {

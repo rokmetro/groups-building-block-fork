@@ -50,6 +50,7 @@ type Services interface {
 
 	ApplyMembershipApproval(clientID string, current *model.User, membershipID string, approve bool, rejectReason string) error
 	UpdateMembership(clientID string, current *model.User, membershipID string, status *string, dateAttended *time.Time, notificationsPreferences *model.NotificationsPreferences) error
+	CreateMembershipsStatuses(clientID string, current *model.User, groupID string, membershipStatuses model.MembershipStatuses) error
 	UpdateMemberships(clientID string, user *model.User, group *model.Group, operation model.MembershipMultiUpdate) error
 
 	GetEvents(clientID string, current *model.User, groupID string, filterByToMembers bool) ([]model.Event, error)
@@ -187,6 +188,10 @@ func (s *servicesImpl) ApplyMembershipApproval(clientID string, current *model.U
 
 func (s *servicesImpl) UpdateMembership(clientID string, current *model.User, membershipID string, status *string, dateAttended *time.Time, notificationsPreferences *model.NotificationsPreferences) error {
 	return s.app.updateMembership(clientID, current, membershipID, status, dateAttended, notificationsPreferences)
+}
+
+func (s *servicesImpl) CreateMembershipsStatuses(clientID string, current *model.User, groupID string, membershipStatuses model.MembershipStatuses) error {
+	return s.app.createMembershipsStatuses(clientID, current, groupID, membershipStatuses)
 }
 
 func (s *servicesImpl) UpdateMemberships(clientID string, user *model.User, group *model.Group, operation model.MembershipMultiUpdate) error {
@@ -391,16 +396,11 @@ func (s *servicesImpl) GetGroupCalendarEvents(clientID string, current *model.Us
 
 // Administration exposes administration APIs for the driver adapters
 type Administration interface {
-	AdminAddGroupMemberships(clientID string, current *model.User, groupID string, membershipStatuses model.MembershipStatuses) error
 	AdminDeleteMembershipsByID(clientID string, current *model.User, groupID string, accountIDs []string) error
 }
 
 type administrationImpl struct {
 	app *Application
-}
-
-func (s *administrationImpl) AdminAddGroupMemberships(clientID string, current *model.User, groupID string, membershipStatuses model.MembershipStatuses) error {
-	return s.app.adminAddGroupMemberships(clientID, current, groupID, membershipStatuses)
 }
 
 func (s *administrationImpl) AdminDeleteMembershipsByID(clientID string, current *model.User, groupID string, accountIDs []string) error {
@@ -570,4 +570,16 @@ type Calendar interface {
 	GetGroupCalendarEvents(currentAccountIdentifier model.AccountIdentifiers, eventIDs []string, appID string, orgID string, published *bool, filter model.GroupEventFilter) (map[string]interface{}, error)
 	AddPeopleToCalendarEvent(people []string, eventID string, orgID string, appID string) error
 	RemovePeopleFromCalendarEvent(people []string, eventID string, orgID string, appID string) error
+}
+
+// Social exposes Social BB APIs for the driver adapters
+type Social interface {
+	GetPosts(clientID string, current *model.User, filter model.PostsFilter, filterPrivatePostsValue *bool, filterByToMembers bool) ([]model.Post, error)
+	GetPost(clientID string, userID *string, groupID string, postID string, skipMembershipCheck bool, filterByToMembers bool) (*model.Post, error)
+	GetUserPostCount(clientID string, userID string) (*int64, error)
+	CreatePost(clientID string, current *model.User, post *model.Post, group *model.Group) (*model.Post, error)
+	UpdatePost(clientID string, current *model.User, group *model.Group, post *model.Post) (*model.Post, error)
+	ReactToPost(clientID string, current *model.User, groupID string, postID string, reaction string) error
+	ReportPostAsAbuse(clientID string, current *model.User, group *model.Group, post *model.Post, comment string, sendToDean bool, sendToGroupAdmins bool) error
+	DeletePost(clientID string, userID string, groupID string, postID string, force bool) error
 }

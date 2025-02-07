@@ -19,6 +19,7 @@ import (
 	"groups/driven/calendar"
 	"groups/driven/corebb"
 	"groups/driven/rewards"
+	"groups/driven/socialbb"
 	"log"
 	"time"
 
@@ -47,6 +48,7 @@ type Application struct {
 	corebb        Core
 	rewards       Rewards
 	calendar      Calendar
+	social        Social
 
 	authmanSyncInProgress bool
 
@@ -127,7 +129,7 @@ func (app *Application) startScheduledPostTask() {
 
 // NewApplication creates new Application
 func NewApplication(version string, build string, storage Storage, notifications Notifications, authman Authman, core *corebb.Adapter,
-	rewards *rewards.Adapter, calendar *calendar.Adapter, serviceID string, logger *logs.Logger, config *model.ApplicationConfig) *Application {
+	rewards *rewards.Adapter, calendar *calendar.Adapter, social *socialbb.Adapter, serviceID string, logger *logs.Logger, config *model.ApplicationConfig) *Application {
 
 	scheduler := cron.New(cron.WithLocation(time.UTC))
 	application := Application{version: version,
@@ -138,6 +140,7 @@ func NewApplication(version string, build string, storage Storage, notifications
 		corebb:        core,
 		rewards:       rewards,
 		calendar:      calendar,
+		social:        social,
 		config:        config,
 		scheduler:     scheduler,
 		logger:        logger,

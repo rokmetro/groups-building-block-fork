@@ -8,11 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Add CORS support
 - Add POST /groups/{group-id}/members/v2 API for web
+
+## [1.58.0] - 2025-02-04
+### Added
+- Client APIs to provide Admin functionality [#541](https://github.com/rokwire/groups-building-block/issues/541)
+
+
+## [1.57.1] - 2025-02-03
+### Changed
+- Fix consolidate the information, and make it accessible with a single API call [#538](https://github.com/rokwire/groups-building-block/issues/538)
 ### Fixed
 - Fix migration data permission [#531](https://github.com/rokwire/groups-building-block/issues/531)
 - Create posts migration api for switching the datasource to Social BB [#529](https://github.com/rokwire/groups-building-block/issues/529)
 
-## [1.56.0] - 2024-01-23
+## [1.56.0] - 2025-01-23
 ### Added
 - Create migration api for Social BB [#527](https://github.com/rokwire/groups-building-block/issues/527)
 - Consolidate the information, and make it accessible with a single API call [#519](https://github.com/rokwire/groups-building-block/issues/519)
