@@ -28,6 +28,7 @@
         "CALENDAR_BASE_URL": "<service url>",
         "GR_SERVICE_ACCOUNT_ID": "<service account id>",
         "GR_CORS_ALLOWED_HEADERS": "<header1>,<header2>",
-        "GR_CORS_ALLOWED_ORIGINS": "<origin1>,<origin2>"
+        "GR_CORS_ALLOWED_ORIGINS": "<origin1>,<origin2>",
+        "GR_SOCIAL_BASE_URL": "<service url>"
     }
 }
