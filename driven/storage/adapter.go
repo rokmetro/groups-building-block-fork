@@ -668,7 +668,7 @@ func (sa *Adapter) FindGroupByTitle(clientID string, title string) (*model.Group
 }
 
 // FindGroups finds groups
-func (sa *Adapter) FindGroups(clientID string, userID *string, groupsFilter model.GroupsFilter) ([]model.Group, error) {
+func (sa *Adapter) FindGroups(clientID string, userID *string, groupsFilter model.GroupsFilter, skipMembershipCheck bool) ([]model.Group, error) {
 	// TODO: Merge the filter logic in a common method (FindGroups, FindGroupsV3, FindUserGroups)
 
 	var err error
@@ -690,7 +690,7 @@ func (sa *Adapter) FindGroups(clientID string, userID *string, groupsFilter mode
 	if groupsFilter.GroupIDs != nil {
 		filter = append(filter, bson.E{Key: "_id", Value: bson.M{"$in": groupsFilter.GroupIDs}})
 	}
-	if userID != nil {
+	if userID != nil && !skipMembershipCheck {
 		innerOrFilter := []bson.M{}
 
 		if groupsFilter.ExcludeMyGroups != nil && *groupsFilter.ExcludeMyGroups {

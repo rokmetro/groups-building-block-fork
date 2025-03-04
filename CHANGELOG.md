@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add CORS support
 - Add POST /groups/{group-id}/members/v2 API for web
 
+## [1.60.0] - 2025-03-04
+### Changed
+- Cleanup and remove the legacy posts logic [#549](https://github.com/rokwire/groups-building-block/issues/549)
+
+## [1.59.1] - 2025-02-12
+### Changed
+- Additional fix: Load all groups [#536](https://github.com/rokwire/groups-building-block/issues/536)
+
+## [1.59.0] - 2025-02-12
+### Changed
+- Load all groups [#536](https://github.com/rokwire/groups-building-block/issues/536)
+
+
+## [1.58.2] - 2025-02-11
+### Added
+- Customization options to choose group modules: Polls, Direct Messaging, Posts, Events [#545](https://github.com/rokwire/groups-building-block/issues/545)
+
+## [1.58.1] - 2025-02-10
+### Fixed
+- Members fail to load for some groups on prod [#542](https://github.com/rokwire/groups-building-block/issues/542)
+
+
 ## [1.58.0] - 2025-02-04
 ### Added
 - Client APIs to provide Admin functionality [#541](https://github.com/rokwire/groups-building-block/issues/541)
