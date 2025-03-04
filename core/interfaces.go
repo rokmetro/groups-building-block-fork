@@ -155,7 +155,7 @@ func (s *servicesImpl) DeleteGroup(clientID string, current *model.User, id stri
 }
 
 func (s *servicesImpl) GetGroups(clientID string, current *model.User, filter model.GroupsFilter) ([]model.Group, error) {
-	return s.app.getGroups(clientID, current, filter)
+	return s.app.getGroups(clientID, current, filter, false)
 }
 
 func (s *servicesImpl) GetAllGroups(clientID string) ([]model.Group, error) {
@@ -396,11 +396,20 @@ func (s *servicesImpl) GetGroupCalendarEvents(clientID string, current *model.Us
 
 // Administration exposes administration APIs for the driver adapters
 type Administration interface {
+	GetGroups(clientID string, current *model.User, filter model.GroupsFilter) ([]model.Group, error)
 	AdminDeleteMembershipsByID(clientID string, current *model.User, groupID string, accountIDs []string) error
 }
 
 type administrationImpl struct {
 	app *Application
+}
+
+func (s *administrationImpl) GetGroups(clientID string, current *model.User, filter model.GroupsFilter) ([]model.Group, error) {
+	skipMembershipCheck := false
+	if current != nil {
+		skipMembershipCheck = current.IsGroupsBBAdministrator()
+	}
+	return s.app.getGroups(clientID, current, filter, skipMembershipCheck)
 }
 
 func (s *administrationImpl) AdminDeleteMembershipsByID(clientID string, current *model.User, groupID string, accountIDs []string) error {
@@ -433,7 +442,7 @@ type Storage interface {
 	DeleteGroup(ctx storage.TransactionContext, clientID string, id string) error
 	FindGroup(context storage.TransactionContext, clientID string, groupID string, userID *string) (*model.Group, error)
 	FindGroupByTitle(clientID string, title string) (*model.Group, error)
-	FindGroups(clientID string, userID *string, filter model.GroupsFilter) ([]model.Group, error)
+	FindGroups(clientID string, userID *string, filter model.GroupsFilter, skipMembershipCheck bool) ([]model.Group, error)
 	FindGroupsByGroupIDs(groupIDs []string) ([]model.Group, error)
 	FindUserGroups(clientID string, userID string, filter model.GroupsFilter) ([]model.Group, error)
 	FindUserGroupsCount(clientID string, userID string) (*int64, error)
@@ -454,22 +463,6 @@ type Storage interface {
 	FindGroupsEvents(context storage.TransactionContext, eventIDs []string) ([]model.GetGroupsEvents, error)
 
 	ReportGroupAsAbuse(clientID string, userID string, group *model.Group) error
-	ReportPostAsAbuse(clientID string, userID string, group *model.Group, post *model.Post) error
-
-	FindPosts(clientID string, current *model.User, filter model.PostsFilter, filterPrivatePostsValue *bool, filterByToMembers bool) ([]model.Post, error)
-	FindPost(context storage.TransactionContext, clientID string, userID *string, groupID string, postID string, skipMembershipCheck bool, filterByToMembers bool) (*model.Post, error)
-	FindPostsByParentID(context storage.TransactionContext, clientID string, userID *string, groupID string, parentID string, skipMembershipCheck bool, filterByToMembers bool, recursive bool, order *string) ([]model.Post, error)
-	GetPostsByUserID(userID string) ([]model.Post, error)
-
-	CreatePost(clientID string, current *model.User, post *model.Post) (*model.Post, error)
-	UpdatePost(clientID string, userID string, post *model.Post) (*model.Post, error)
-	ReactToPost(context storage.TransactionContext, userID string, postID string, reaction string, on bool) error
-	DeletePost(ctx storage.TransactionContext, clientID string, userID string, groupID string, postID string, force bool) error
-	DeletePostsByAccountsIDs(log *logs.Logger, context storage.TransactionContext, accountsIDs []string) error
-	PullMembersFromPostsByUserIDs(log *logs.Logger, context storage.TransactionContext, accountsIDs []string) error
-
-	FindScheduledPosts(context storage.TransactionContext) ([]model.Post, error)
-	UpdateDateNotifiedForPostIDs(context storage.TransactionContext, ids []string, dateNotified time.Time) error
 
 	FindAuthmanGroups(clientID string) ([]model.Group, error)
 	FindAuthmanGroupByKey(clientID string, authmanGroupKey string) (*model.Group, error)
