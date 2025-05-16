@@ -190,8 +190,13 @@ func (app *Application) createGroupV3(clientID string, current *model.User, grou
 
 		// Create intitial members if need
 		var members []model.GroupMembership
-		accountIDs := []string{}
-		accountIDMapping := map[string]model.MembershipStatus{}
+		accountIDs := []string{current.ID}
+		accountIDMapping := map[string]model.MembershipStatus{
+			current.ID: {
+				UserID: current.ID,
+				Status: "admin",
+			},
+		}
 		netIDs := []string{}
 		netIDMapping := map[string]model.MembershipStatus{}
 
