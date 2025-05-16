@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add CORS support
 - Add POST /groups/{group-id}/members/v2 API for web
 
+## [1.64.0] - 2025-05-15
+### Added
+- Add a description field to the /gr/api/analytics/groups analytics API [#567](https://github.com/rokwire/groups-building-block/issues/567)
+- Inactive Groups [#552](https://github.com/rokwire/groups-building-block/issues/552)
+
+## [1.63.0] - 2025-05-09
+### Changed
+- Improve PUT group/{group-id}/members/multi-create [#562](https://github.com/rokwire/groups-building-block/issues/562)
+### Added
+- Improve POST api/groups [#561](https://github.com/rokwire/groups-building-block/issues/561)
+
+## [1.62.0] - 2025-04-17
+### Changed
+- Support Google Trust Services as CA [#558](https://github.com/rokwire/groups-building-block/issues/558)
+
+## [1.61.0] - 2025-04-07
+### Changed
+- Only the delete managed group operation should require managed_group_admin permission [#553](https://github.com/rokwire/groups-building-block/issues/553)
+
 ## [1.60.0] - 2025-03-04
 ### Changed
 - Cleanup and remove the legacy posts logic [#549](https://github.com/rokwire/groups-building-block/issues/549)
