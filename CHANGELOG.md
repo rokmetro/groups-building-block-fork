@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Add CORS support
 - Add POST /groups/{group-id}/members/v2 API for web
+### Fixed
+- Do not require both UserID and ExternalID to create a group membership
 
 ## [1.64.0] - 2025-05-15
 ### Added
