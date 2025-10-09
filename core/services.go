@@ -585,6 +585,7 @@ func (app *Application) createMembershipsStatuses(clientID string, current *mode
 					if membership.UserID == account.ID {
 						if _, ok := existingIDs[account.ID]; !ok {
 							existingIDs[account.ID] = true
+							found = true
 							memberships = append(memberships, model.GroupMembership{
 								ClientID:   clientID,
 								GroupID:    group.ID,
