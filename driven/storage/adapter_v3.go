@@ -484,7 +484,7 @@ func (sa *Adapter) CreateMemberships(context TransactionContext, clientID string
 
 	var objects []mongo.WriteModel
 	for index := range memberships {
-		if (memberships[index].UserID != "" || memberships[index].ExternalID != "") && memberships[index].Email != "" && memberships[index].Status != "" {
+		if (memberships[index].UserID != "" || memberships[index].ExternalID != "" || memberships[index].Email != "") && memberships[index].Status != "" {
 			objects = append(objects, &mongo.UpdateOneModel{
 				Filter: bson.M{
 					"group_id": group.ID,
